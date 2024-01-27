@@ -1,20 +1,13 @@
 import { Environment, OrbitControls } from '@react-three/drei';
 import React from 'react';
-import { Card } from './Card';
+
+import { Character } from './Character';
 
 export const Experience = () => {
   return (
     <>
       <OrbitControls />
-      <Card />
-      <Card
-        position-x={-2}
-        type='punch'
-      />
-      <Card
-        position-x={2}
-        type='grab'
-      />
+      <Character />
       <Environment
         preset='dawn'
         background
