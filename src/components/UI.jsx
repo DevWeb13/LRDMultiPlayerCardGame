@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { isHost, isStreamScreen, myPlayer } from 'playroomkit';
 import { NB_ROUNDS, useGameEngine } from '../hooks/useGameEngine';
 import React from 'react';
