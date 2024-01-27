@@ -3,6 +3,7 @@ import { Experience } from './components/Experience';
 import React from 'react';
 import { Leva } from 'leva';
 import { isHost } from 'playroomkit';
+import { UI } from './components/UI';
 
 const DEBUG = true;
 
@@ -19,6 +20,7 @@ function App() {
         />
         <Experience />
       </Canvas>
+      <UI />
     </>
   );
 }
