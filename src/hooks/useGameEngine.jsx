@@ -11,7 +11,7 @@ import {
 import React, { useEffect, useRef } from 'react';
 import { randInt } from 'three/src/math/MathUtils';
 
-const GameEngineContent = React.createContext({});
+const GameEngineContext = React.createContext();
 
 const TIME_PHASE_CARDS = 10;
 const TIME_PHASE_PLAYER_CHOICE = 10;
@@ -29,13 +29,13 @@ export const GameEngineProvider = ({ children }) => {
   const [playerStart, setPlayerStart] = useMultiplayerState('playerStart', 0);
   const [deck, setDeck] = useMultiplayerState('deck', []);
   const [gems, setGems] = useMultiplayerState('gems', NB_GEMS);
-  const [actionsSuccess, setActionsSuccess] = useMultiplayerState(
-    'actionsSuccess',
+  const [actionSuccess, setActionSuccess] = useMultiplayerState(
+    'actionSuccess',
     true
   );
 
   const players = usePlayersList(true);
-  players.sort((a, b) => a.id.localeCompare(b.id)); // sort players by id
+  players.sort((a, b) => a.id.localeCompare(b.id)); // we sort players by id to have a consistent order through all clients
 
   const gameState = {
     timer,
@@ -46,7 +46,7 @@ export const GameEngineProvider = ({ children }) => {
     players,
     gems,
     deck,
-    actionsSuccess,
+    actionSuccess,
   };
 
   const distributeCards = (nbCards) => {
@@ -67,9 +67,9 @@ export const GameEngineProvider = ({ children }) => {
 
   const startGame = () => {
     if (isHost()) {
-      console.log('startGame');
+      console.log('Start game');
       setTimer(TIME_PHASE_CARDS, true);
-      const randomPlayer = randInt(0, players.length - 1); // random player start
+      const randomPlayer = randInt(0, players.length - 1); // we choose a random player to start
       setPlayerStart(randomPlayer, true);
       setPlayerTurn(randomPlayer, true);
       setRound(1, true);
@@ -96,12 +96,12 @@ export const GameEngineProvider = ({ children }) => {
 
   useEffect(() => {
     startGame();
-    onPlayerJoin(startGame);
+    onPlayerJoin(startGame); // we restart the game when a new player joins
   }, []);
 
   const performPlayerAction = () => {
     const player = players[getState('playerTurn')];
-    console.log('performPlayerAction', player.id);
+    console.log('Perform player action', player.id);
     const selectedCard = player.getState('selectedCard');
     const cards = player.getState('cards');
     const card = cards[selectedCard];
@@ -113,9 +113,9 @@ export const GameEngineProvider = ({ children }) => {
       case 'punch':
         let target = players[player.getState('playerTarget')];
         if (!target) {
-          let targetIndex = (getState('playerTurn') + 1) % players.length; // next player
+          let targetIndex = (getState('playerTurn') + 1) % players.length;
           player.setState('playerTarget', targetIndex, true);
-          target = players[targetIndex]; // next player
+          target = players[targetIndex]; // we punch the next player if playerTarget is not set
         }
         console.log('Punch target', target.id);
         if (target.getState('shield')) {
@@ -133,7 +133,7 @@ export const GameEngineProvider = ({ children }) => {
         if (getState('gems') > 0) {
           player.setState('gems', player.getState('gems') + 1, true);
           setGems(getState('gems') - 1, true);
-          console.log('Grabbeb gem');
+          console.log('Grabbed gem');
         } else {
           console.log('No gems available');
           success = false;
@@ -146,7 +146,7 @@ export const GameEngineProvider = ({ children }) => {
       default:
         break;
     }
-    setActionsSuccess(success, true);
+    setActionSuccess(success, true);
   };
 
   const removePlayerCard = () => {
@@ -159,9 +159,13 @@ export const GameEngineProvider = ({ children }) => {
 
   const getCard = () => {
     const player = players[getState('playerTurn')];
-    if (!player) return '';
+    if (!player) {
+      return '';
+    }
     const cards = player.getState('cards');
-    if (!cards) return '';
+    if (!cards) {
+      return '';
+    }
     const selectedCard = player.getState('selectedCard');
     return cards[selectedCard];
   };
@@ -190,8 +194,8 @@ export const GameEngineProvider = ({ children }) => {
         if (newPlayerTurn === getState('playerStart')) {
           // EVERY PLAYER PLAYED
           if (getState('round') === NB_ROUNDS) {
-            // GAME END
-            console.log('GAME END');
+            // END OF GAME
+            console.log('End of game');
             let maxGems = 0;
             players.forEach((player) => {
               if (player.getState('gems') > maxGems) {
@@ -209,19 +213,19 @@ export const GameEngineProvider = ({ children }) => {
             setPhase('end', true);
           } else {
             // NEXT ROUND
-            console.log('NEXT ROUND');
+            console.log('Next round');
             const newPlayerStart =
-              (getState('playerStart') + 1) % players.length; // next player start
+              (getState('playerStart') + 1) % players.length; // we change the player who starts
             setPlayerStart(newPlayerStart, true);
             setPlayerTurn(newPlayerStart, true);
             setRound(getState('round') + 1, true);
-            distributeCards(1);
+            distributeCards(1); // we give one new card to each player
             setPhase('cards', true);
             newTime = TIME_PHASE_CARDS;
           }
         } else {
           // NEXT PLAYER
-          console.log('NEXT PLAYER');
+          console.log('Next player');
           setPlayerTurn(newPlayerTurn, true);
           if (getCard() === 'punch') {
             setPhase('playerChoice', true);
@@ -270,19 +274,19 @@ export const GameEngineProvider = ({ children }) => {
   }, [phase, paused]);
 
   return (
-    <GameEngineContent.Provider
+    <GameEngineContext.Provider
       value={{
         ...gameState,
         startGame,
         getCard,
       }}>
       {children}
-    </GameEngineContent.Provider>
+    </GameEngineContext.Provider>
   );
 };
 
 export const useGameEngine = () => {
-  const context = React.useContext(GameEngineContent);
+  const context = React.useContext(GameEngineContext);
   if (context === undefined) {
     throw new Error('useGameEngine must be used within a GameEngineProvider');
   }
