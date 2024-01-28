@@ -7,7 +7,9 @@ import { insertCoin } from 'playroomkit';
 
 const rootElement = document.getElementById('root');
 if (rootElement) {
-  insertCoin().then(() => {
+  insertCoin({
+    streamMode: true,
+  }).then(() => {
     ReactDOM.createRoot(rootElement).render(
       <React.StrictMode>
         <GameEngineProvider>

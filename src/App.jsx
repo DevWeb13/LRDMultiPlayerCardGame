@@ -2,11 +2,11 @@ import { Canvas } from '@react-three/fiber';
 import { Experience } from './components/Experience';
 import React from 'react';
 import { Leva } from 'leva';
-import { isHost } from 'playroomkit';
+import { isHost, isStreamScreen } from 'playroomkit';
 import { UI } from './components/UI';
 import { MotionConfig } from 'framer-motion';
 
-const DEBUG = true;
+const DEBUG = false;
 
 function App() {
   return (
@@ -14,7 +14,10 @@ function App() {
       <Leva hidden={!DEBUG || !isHost()} />
       <Canvas
         shadows
-        camera={{ position: [0, 4, 12], fov: 30 }}>
+        camera={{
+          position: isStreamScreen() ? [14, 10, -14] : [0, 4, 12],
+          fov: 30,
+        }}>
         <color
           attach='background'
           args={['#ececec']}

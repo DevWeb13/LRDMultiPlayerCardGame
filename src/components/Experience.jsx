@@ -1,14 +1,15 @@
 import { Environment, OrbitControls } from '@react-three/drei';
 import React from 'react';
 
-import { Character } from './Character';
 import { MobileController } from './MobileController';
+import { isStreamScreen } from 'playroomkit';
+import { Gameboard } from './Gameboard';
 
 export const Experience = () => {
   return (
     <>
       <OrbitControls />
-      <MobileController />
+      {isStreamScreen() ? <Gameboard /> : <MobileController />}
       <Environment
         preset='dawn'
         background

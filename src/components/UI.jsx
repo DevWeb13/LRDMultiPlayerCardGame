@@ -1,7 +1,16 @@
 // @ts-nocheck
 import { isHost, isStreamScreen, myPlayer } from 'playroomkit';
+import { useEffect, useState } from 'react';
 import { NB_ROUNDS, useGameEngine } from '../hooks/useGameEngine';
-import React from 'react';
+
+const audios = {
+  background: new Audio('/audios/Drunken Sailor - Cooper Cannell.mp3'),
+  punch: new Audio('/audios/punch.mp3'),
+  shield: new Audio('/audios/shield.mp3'),
+  grab: new Audio('/audios/grab.mp3'),
+  fail: new Audio('/audios/fail.mp3'),
+  cards: new Audio('/audios/cards.mp3'),
+};
 
 export const UI = () => {
   const {
@@ -37,10 +46,9 @@ export const UI = () => {
     case 'playerAction':
       switch (currentCard) {
         case 'punch':
-          console.log({ target });
           label = actionSuccess
             ? `${currentPlayer?.state.profile?.name} is punching ${target?.state.profile?.name}`
-            : `${currentPlayer?.state.profile?.name} failed punching ${target?.state.profile?.name} `;
+            : `${currentPlayer?.state.profile?.name} failed punching ${target?.state.profile?.name}`;
           break;
         case 'grab':
           label = actionSuccess
@@ -48,18 +56,57 @@ export const UI = () => {
             : `No more gems for ${currentPlayer?.state.profile?.name}`;
           break;
         case 'shield':
-          label = `${currentPlayer?.state.profile?.name} can't be punched until next round`;
+          label = `${currentPlayer?.state.profile?.name} can't be punched until next turn`;
           break;
         default:
           break;
       }
       break;
     case 'end':
-      label = 'Game over';
+      label = 'Game Over';
       break;
     default:
       break;
   }
+
+  // AUDIO MANAGER
+  const [audioEnabled, setAudioEnabled] = useState(false);
+  const toggleAudio = () => {
+    setAudioEnabled((prev) => !prev);
+  };
+
+  useEffect(() => {
+    if (audioEnabled) {
+      audios.background.play();
+      audios.background.loop = true;
+    } else {
+      audios.background.pause();
+    }
+    return () => {
+      audios.background.pause();
+    };
+  }, [audioEnabled]);
+
+  useEffect(() => {
+    if (!audioEnabled) {
+      return;
+    }
+    let audioToPlay;
+    if (phase === 'playerAction') {
+      if (actionSuccess) {
+        audioToPlay = audios[getCard()];
+      } else {
+        audioToPlay = audios.fail;
+      }
+    }
+    if (phase === 'cards') {
+      audioToPlay = audios.cards;
+    }
+    if (audioToPlay) {
+      audioToPlay.currentTime = 0;
+      audioToPlay.play();
+    }
+  }, [phase, actionSuccess, audioEnabled]);
   return (
     <div className='text-white drop-shadow-xl fixed top-0 left-0 right-0 bottom-0 z-10 flex flex-col pointer-events-none'>
       <div className='p-4 w-full flex items-center justify-between'>
@@ -106,7 +153,7 @@ export const UI = () => {
           </button>
         )}
       </div>
-      {/* {isStreamScreen() && (
+      {isStreamScreen() && (
         <button
           className='fixed bottom-4 left-4 pointer-events-auto'
           onClick={toggleAudio}>
@@ -140,7 +187,7 @@ export const UI = () => {
             </svg>
           )}
         </button>
-      )} */}
+      )}
     </div>
   );
 };
